@@ -133,7 +133,7 @@ const struct wl_registry_listener g_registryListener = {
             interfaces.seat = static_cast<struct wl_seat*>(wl_registry_bind(registry, name, &wl_seat_interface, 4));
 
         if (!std::strcmp(interface, "xdg_shell"))
-            interfaces.xdg = static_cast<struct xdg_shell*>(wl_registry_bind(registry, name, &xdg_shell_interface, 1)); 
+            interfaces.xdg = static_cast<struct xdg_shell*>(wl_registry_bind(registry, name, &xdg_shell_interface, 1));
 
         if (!std::strcmp(interface, "wl_shell"))
             interfaces.shell = static_cast<struct wl_shell*>(wl_registry_bind(registry, name, &wl_shell_interface, 1));
@@ -389,16 +389,34 @@ static const struct wl_touch_listener g_touchListener = {
         if (id < 0 || id >= arraySize)
             return;
 
+
+        if (!surface)
+            fprintf(stderr, "g_touchListener::down !surface return early\n");
+
         auto& target = seatData.touch.targets[id];
-        assert(!target.first && !target.second);
+        //assert(!target.first && !target.second);
+
+        if (target.first)
+            fprintf(stderr, "g_touchListener::down target.first true\n");
+        else
+            fprintf(stderr, "g_touchListener::down target.first false\n");
+        if (target.second)
+            fprintf(stderr, "g_touchListener::down target.second true\n");
+        else
+            fprintf(stderr, "g_touchListener::down target.second false\n");
+
 
         auto it = seatData.inputClients.find(surface);
-        if (it == seatData.inputClients.end())
-            return;
+        if (it == seatData.inputClients.end()) {
+            fprintf(stderr, "g_touchListener::down !it == seatData.inputClients.end() return early (NOOOO!)\n");
+            //return;
+        }
 
         target = { surface, it->second };
 
+
         auto& touchPoints = seatData.touch.touchPoints;
+        fprintf(stderr, "g_touchListener::down position is x=%d and y=%d\n", wl_fixed_to_int(x), wl_fixed_to_int(y));
         touchPoints[id] = { wpe_input_touch_event_type_down, time, id, wl_fixed_to_int(x), wl_fixed_to_int(y) };
 
         struct wpe_input_touch_event event = { touchPoints.data(), touchPoints.size(), wpe_input_touch_event_type_down, id, time };
@@ -406,8 +424,8 @@ static const struct wl_touch_listener g_touchListener = {
         struct wpe_view_backend* backend = target.second;
         wpe_view_backend_dispatch_touch_event(backend, &event);
     },
-    // up
     [](void* data, struct wl_touch*, uint32_t serial, uint32_t time, int32_t id)
+    // up
     {
         auto& seatData = *static_cast<Display::SeatData*>(data);
         seatData.serial = serial;
@@ -417,10 +435,20 @@ static const struct wl_touch_listener g_touchListener = {
             return;
 
         auto& target = seatData.touch.targets[id];
-        assert(target.first && target.second);
+
+        if (target.first)
+            fprintf(stderr, "g_touchListener::up target.first true\n");
+        else
+            fprintf(stderr, "g_touchListener::up target.first false\n");
+        if (target.second)
+            fprintf(stderr, "g_touchListener::up target.second true\n");
+        else
+            fprintf(stderr, "g_touchListener::up target.second false\n");
 
         auto& touchPoints = seatData.touch.touchPoints;
         auto& point = touchPoints[id];
+
+        fprintf(stderr, "g_touchListener::down position is x=%d and y=%d\n", point.x, point.y);
         point = { wpe_input_touch_event_type_up, time, id, point.x, point.y };
 
         struct wpe_input_touch_event event = { touchPoints.data(), touchPoints.size(), wpe_input_touch_event_type_up, id, time };
@@ -441,9 +469,19 @@ static const struct wl_touch_listener g_touchListener = {
             return;
 
         auto& target = seatData.touch.targets[id];
-        assert(target.first && target.second);
+
+        if (target.first)
+            fprintf(stderr, "g_touchListener::motion target.m true\n");
+        else
+            fprintf(stderr, "g_touchListener::motion target.first false\n");
+        if (target.second)
+            fprintf(stderr, "g_touchListener::motion target.second true\n");
+        else
+            fprintf(stderr, "g_touchListener::motion target.second false\n");
 
         auto& touchPoints = seatData.touch.touchPoints;
+
+        fprintf(stderr, "g_touchListener::motion position is x=%d and y=%d\n", wl_fixed_to_int(x), wl_fixed_to_int(y));
         touchPoints[id] = { wpe_input_touch_event_type_motion, time, id, wl_fixed_to_int(x), wl_fixed_to_int(y) };
 
         struct wpe_input_touch_event event = { touchPoints.data(), touchPoints.size(), wpe_input_touch_event_type_motion, id, time };
