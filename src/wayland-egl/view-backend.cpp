@@ -32,8 +32,8 @@
 #include "ipc.h"
 #include "ipc-waylandegl.h"
 
-#define WIDTH 1280
-#define HEIGHT 720
+#define WIDTH 480
+#define HEIGHT 800
 
 namespace WaylandEGL {
 
