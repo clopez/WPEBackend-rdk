@@ -389,22 +389,14 @@ static const struct wl_touch_listener g_touchListener = {
         if (id < 0 || id >= arraySize)
             return;
 
-        auto& target = seatData.touch.targets[id];
-        assert(!target.first && !target.second);
-
-        auto it = seatData.inputClients.find(surface);
-        if (it == seatData.inputClients.end())
-            return;
-
-        target = { surface, it->second };
-
         auto& touchPoints = seatData.touch.touchPoints;
         touchPoints[id] = { wpe_input_touch_event_type_down, time, id, wl_fixed_to_int(x), wl_fixed_to_int(y) };
 
-        struct wpe_input_touch_event event = { touchPoints.data(), touchPoints.size(), wpe_input_touch_event_type_down, id, time };
+        if (getenv("WPE_DEBUG_TOUCH"))
+            fprintf(stderr, "g_touchListener::down position is x=%d y=%d\n", wl_fixed_to_int(x), wl_fixed_to_int(y));
 
-        struct wpe_view_backend* backend = target.second;
-        wpe_view_backend_dispatch_touch_event(backend, &event);
+        struct wpe_input_touch_event event = { touchPoints.data(), touchPoints.size(), wpe_input_touch_event_type_down, id, time };
+        EventDispatcher::singleton().sendEvent( event );
     },
     // up
     [](void* data, struct wl_touch*, uint32_t serial, uint32_t time, int32_t id)
@@ -416,20 +408,15 @@ static const struct wl_touch_listener g_touchListener = {
         if (id < 0 || id >= arraySize)
             return;
 
-        auto& target = seatData.touch.targets[id];
-        assert(target.first && target.second);
-
         auto& touchPoints = seatData.touch.touchPoints;
         auto& point = touchPoints[id];
         point = { wpe_input_touch_event_type_up, time, id, point.x, point.y };
 
+        if (getenv("WPE_DEBUG_TOUCH"))
+            fprintf(stderr, "g_touchListener::up position is x=%d y=%d\n", point.x, point.y);
+
         struct wpe_input_touch_event event = { touchPoints.data(), touchPoints.size(), wpe_input_touch_event_type_up, id, time };
-
-        struct wpe_view_backend* backend = target.second;
-        wpe_view_backend_dispatch_touch_event(backend, &event);
-
-        point = { wpe_input_touch_event_type_null, 0, 0, 0, 0 };
-        target = { nullptr, nullptr };
+        EventDispatcher::singleton().sendEvent( event );
     },
     // motion
     [](void* data, struct wl_touch*, uint32_t time, int32_t id, wl_fixed_t x, wl_fixed_t y)
@@ -440,16 +427,14 @@ static const struct wl_touch_listener g_touchListener = {
         if (id < 0 || id >= arraySize)
             return;
 
-        auto& target = seatData.touch.targets[id];
-        assert(target.first && target.second);
-
         auto& touchPoints = seatData.touch.touchPoints;
         touchPoints[id] = { wpe_input_touch_event_type_motion, time, id, wl_fixed_to_int(x), wl_fixed_to_int(y) };
 
-        struct wpe_input_touch_event event = { touchPoints.data(), touchPoints.size(), wpe_input_touch_event_type_motion, id, time };
+        if (getenv("WPE_DEBUG_TOUCH"))
+            fprintf(stderr, "g_touchListener::down motion is x=%d y=%d\n", wl_fixed_to_int(x), wl_fixed_to_int(y));
 
-        struct wpe_view_backend* backend = target.second;
-        wpe_view_backend_dispatch_touch_event(backend, &event);
+        struct wpe_input_touch_event event = { touchPoints.data(), touchPoints.size(), wpe_input_touch_event_type_motion, id, time };
+        EventDispatcher::singleton().sendEvent( event );
     },
     // frame
     [](void*, struct wl_touch*)
