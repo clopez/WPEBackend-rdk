@@ -396,7 +396,12 @@ static const struct wl_touch_listener g_touchListener = {
             fprintf(stderr, "g_touchListener::down position is x=%d y=%d\n", wl_fixed_to_int(x), wl_fixed_to_int(y));
 
         struct wpe_input_touch_event event = { touchPoints.data(), touchPoints.size(), wpe_input_touch_event_type_down, id, time };
-        EventDispatcher::singleton().sendEvent( event );
+        struct wpe_input_pointer_event event_fake_mouse = { wpe_input_pointer_event_type_button, time, wl_fixed_to_int(x), wl_fixed_to_int(y), /*pointer.button=left*/ 1, /*pointer.state=on*/ 1 };
+
+        if (getenv("WPE_TOUCH_FAKE_MOUSE"))
+            EventDispatcher::singleton().sendEvent( event_fake_mouse );
+        else
+            EventDispatcher::singleton().sendEvent( event );
     },
     // up
     [](void* data, struct wl_touch*, uint32_t serial, uint32_t time, int32_t id)
@@ -416,7 +421,12 @@ static const struct wl_touch_listener g_touchListener = {
             fprintf(stderr, "g_touchListener::up position is x=%d y=%d\n", point.x, point.y);
 
         struct wpe_input_touch_event event = { touchPoints.data(), touchPoints.size(), wpe_input_touch_event_type_up, id, time };
-        EventDispatcher::singleton().sendEvent( event );
+        struct wpe_input_pointer_event event_fake_mouse = { wpe_input_pointer_event_type_button, time, point.x, point.y , /*pointer.button=left*/ 1, /*pointer.state=off*/ 0 };
+
+        if (getenv("WPE_TOUCH_FAKE_MOUSE"))
+            EventDispatcher::singleton().sendEvent( event_fake_mouse );
+        else
+            EventDispatcher::singleton().sendEvent( event );
     },
     // motion
     [](void* data, struct wl_touch*, uint32_t time, int32_t id, wl_fixed_t x, wl_fixed_t y)
@@ -434,7 +444,12 @@ static const struct wl_touch_listener g_touchListener = {
             fprintf(stderr, "g_touchListener::down motion is x=%d y=%d\n", wl_fixed_to_int(x), wl_fixed_to_int(y));
 
         struct wpe_input_touch_event event = { touchPoints.data(), touchPoints.size(), wpe_input_touch_event_type_motion, id, time };
-        EventDispatcher::singleton().sendEvent( event );
+        struct wpe_input_pointer_event event_fake_mouse = { wpe_input_pointer_event_type_motion, time, wl_fixed_to_int(x), wl_fixed_to_int(y) , /*pointer.button=left*/ 1, /*pointer.state=on*/ 1 };
+
+        if (getenv("WPE_TOUCH_FAKE_MOUSE"))
+            EventDispatcher::singleton().sendEvent( event_fake_mouse );
+        else
+            EventDispatcher::singleton().sendEvent( event );
     },
     // frame
     [](void*, struct wl_touch*)
