@@ -389,6 +389,18 @@ static const struct wl_touch_listener g_touchListener = {
         if (id < 0 || id >= arraySize)
             return;
 
+        auto& touchPoints = seatData.touch.touchPoints;
+        touchPoints[id] = { wpe_input_touch_event_type_down, time, id, wl_fixed_to_int(x), wl_fixed_to_int(y) };
+
+        if (getenv("WPE_DEBUG_TOUCH"))
+            fprintf(stderr, "g_touchListener::down position is x=%d y=%d\n", wl_fixed_to_int(x), wl_fixed_to_int(y));
+
+        if (getenv("WPE_TOUCH_FAKE_MOUSE")) {
+            struct wpe_input_pointer_event event_fake_mouse = { wpe_input_pointer_event_type_button, time, wl_fixed_to_int(x), wl_fixed_to_int(y), /*pointer.button=left*/ 1, /*pointer.state=on*/ 1 };
+            EventDispatcher::singleton().sendEvent( event_fake_mouse );
+            return;
+        }
+
         auto& target = seatData.touch.targets[id];
         assert(!target.first && !target.second);
 
@@ -397,9 +409,6 @@ static const struct wl_touch_listener g_touchListener = {
             return;
 
         target = { surface, it->second };
-
-        auto& touchPoints = seatData.touch.touchPoints;
-        touchPoints[id] = { wpe_input_touch_event_type_down, time, id, wl_fixed_to_int(x), wl_fixed_to_int(y) };
 
         struct wpe_input_touch_event event = { touchPoints.data(), touchPoints.size(), wpe_input_touch_event_type_down, id, time };
 
@@ -416,13 +425,22 @@ static const struct wl_touch_listener g_touchListener = {
         if (id < 0 || id >= arraySize)
             return;
 
+        auto& touchPoints = seatData.touch.touchPoints;
+        auto& point = touchPoints[id];
+
+        if (getenv("WPE_DEBUG_TOUCH"))
+            fprintf(stderr, "g_touchListener::up position is x=%d y=%d\n", point.x, point.y);
+
+        if (getenv("WPE_TOUCH_FAKE_MOUSE")) {
+            struct wpe_input_pointer_event event_fake_mouse = { wpe_input_pointer_event_type_button, time, point.x, point.y , /*pointer.button=left*/ 1, /*pointer.state=off*/ 0 };
+            EventDispatcher::singleton().sendEvent( event_fake_mouse );
+            return;
+        }
+
         auto& target = seatData.touch.targets[id];
         assert(target.first && target.second);
 
-        auto& touchPoints = seatData.touch.touchPoints;
-        auto& point = touchPoints[id];
         point = { wpe_input_touch_event_type_up, time, id, point.x, point.y };
-
         struct wpe_input_touch_event event = { touchPoints.data(), touchPoints.size(), wpe_input_touch_event_type_up, id, time };
 
         struct wpe_view_backend* backend = target.second;
@@ -440,11 +458,20 @@ static const struct wl_touch_listener g_touchListener = {
         if (id < 0 || id >= arraySize)
             return;
 
-        auto& target = seatData.touch.targets[id];
-        assert(target.first && target.second);
-
         auto& touchPoints = seatData.touch.touchPoints;
         touchPoints[id] = { wpe_input_touch_event_type_motion, time, id, wl_fixed_to_int(x), wl_fixed_to_int(y) };
+
+        if (getenv("WPE_DEBUG_TOUCH"))
+            fprintf(stderr, "g_touchListener::motion position is x=%d y=%d\n", wl_fixed_to_int(x), wl_fixed_to_int(y));
+
+        if (getenv("WPE_TOUCH_FAKE_MOUSE")) {
+            struct wpe_input_pointer_event event_fake_mouse = { wpe_input_pointer_event_type_motion, time, wl_fixed_to_int(x), wl_fixed_to_int(y) , /*pointer.button=left*/ 1, /*pointer.state=on*/ 1 };
+            EventDispatcher::singleton().sendEvent( event_fake_mouse );
+            return;
+        }
+
+        auto& target = seatData.touch.targets[id];
+        assert(target.first && target.second);
 
         struct wpe_input_touch_event event = { touchPoints.data(), touchPoints.size(), wpe_input_touch_event_type_motion, id, time };
 
