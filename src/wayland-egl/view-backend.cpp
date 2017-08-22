@@ -90,6 +90,16 @@ void ViewBackend::handleMessage(char* data, size_t size)
         wpe_view_backend_dispatch_touch_event(backend, event);
         break;
     }
+    case Wayland::EventDispatcher::MsgType::TOUCHSIMPLE:
+    {
+        struct wpe_input_touch_event_raw * touchpoint = reinterpret_cast<wpe_input_touch_event_raw*>(std::addressof(message.messageData));
+        if (getenv("WPE_DEBUG_TOUCH"))
+            fprintf(stderr, "%s Received TOUCHSIMPLE event with time=%d id=%d x=%d y=%d\n", program_invocation_name, touchpoint->time, touchpoint->id, touchpoint->x, touchpoint->y);
+
+        struct wpe_input_touch_event event = { touchpoint, sizeof(struct wpe_input_touch_event_raw), touchpoint->type, touchpoint->id, touchpoint->time };
+        wpe_view_backend_dispatch_touch_event(backend, &event);
+        break;
+    }
     case Wayland::EventDispatcher::MsgType::KEYBOARD:
     {
         struct wpe_input_keyboard_event * event = reinterpret_cast<wpe_input_keyboard_event*>(std::addressof(message.messageData));
