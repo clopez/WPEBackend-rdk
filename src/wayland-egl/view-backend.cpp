@@ -74,24 +74,43 @@ void ViewBackend::handleMessage(char* data, size_t size)
     switch (message.messageCode) {
     case Wayland::EventDispatcher::MsgType::AXIS:
     {
+        if (getenv("WPE_DEBUG_TOUCH"))
+            fprintf(stderr, "%s Received Wayland::EventDispatcher::MsgType::AXIS\n", program_invocation_name);
         struct wpe_input_axis_event * event = reinterpret_cast<wpe_input_axis_event*>(std::addressof(message.messageData));
         wpe_view_backend_dispatch_axis_event(backend, event);
         break;
     }
     case Wayland::EventDispatcher::MsgType::POINTER:
     {
+        if (getenv("WPE_DEBUG_TOUCH"))
+            fprintf(stderr, "%s Received Wayland::EventDispatcher::MsgType::POINTER\n", program_invocation_name);
         struct wpe_input_pointer_event * event = reinterpret_cast<wpe_input_pointer_event*>(std::addressof(message.messageData));
         wpe_view_backend_dispatch_pointer_event(backend, event);
         break;
     }
     case Wayland::EventDispatcher::MsgType::TOUCH:
     {
+        if (getenv("WPE_DEBUG_TOUCH"))
+            fprintf(stderr, "%s Received Wayland::EventDispatcher::MsgType::TOUCH\n", program_invocation_name);
         struct wpe_input_touch_event * event = reinterpret_cast<wpe_input_touch_event*>(std::addressof(message.messageData));
         wpe_view_backend_dispatch_touch_event(backend, event);
         break;
     }
+    case Wayland::EventDispatcher::MsgType::TOUCHSIMPLE:
+    {
+        struct wpe_input_touch_event_raw * touchpoint = reinterpret_cast<wpe_input_touch_event_raw*>(std::addressof(message.messageData));
+        if (getenv("WPE_DEBUG_TOUCH"))
+            fprintf(stderr, "%s Received Wayland::EventDispatcher::MsgType::TOUCHSIMPLE with time=%d id=%d x=%d y=%d\n", program_invocation_name, touchpoint->time, touchpoint->id, touchpoint->x, touchpoint->y);
+
+        struct wpe_input_touch_event  event = { touchpoint, sizeof(struct wpe_input_touch_event_raw), touchpoint->type, touchpoint->id, touchpoint->time };
+
+        wpe_view_backend_dispatch_touch_event(backend, &event);
+        break;
+    }
     case Wayland::EventDispatcher::MsgType::KEYBOARD:
     {
+        if (getenv("WPE_DEBUG_TOUCH"))
+            fprintf(stderr, "%s Received Wayland::EventDispatcher::MsgType::KEYBOARD\n", program_invocation_name);
         struct wpe_input_keyboard_event * event = reinterpret_cast<wpe_input_keyboard_event*>(std::addressof(message.messageData));
         wpe_view_backend_dispatch_keyboard_event(backend, event);
         break;
